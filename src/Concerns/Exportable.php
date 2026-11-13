@@ -3,6 +3,7 @@
 namespace Laraigniter\Excel\Concerns;
 
 use Elegant\Support\Str;
+use Laraigniter\Excel\ExcelConfig;
 use Laraigniter\Excel\ExportAuditContext;
 use Throwable;
 
@@ -21,7 +22,10 @@ trait Exportable
 
         $extension = pathinfo($filePath, PATHINFO_EXTENSION);
 
-        $name = $filename ?? Str::of(class_basename(static::class))->snake()->toString() . '_' . now()->format('Ymd_Hi') . '.' . $extension;
+        $dateFormat = ExcelConfig::get('exports.date_format', 'Ymd_Hi');
+        $dateFormat = is_string($dateFormat) && $dateFormat !== '' ? $dateFormat : 'Ymd_Hi';
+
+        $name = $filename ?? Str::of(class_basename(static::class))->snake()->toString() . '_' . now()->format($dateFormat) . '.' . $extension;
 
         static::logDownload($filePath, $name, $extension);
 
@@ -33,7 +37,8 @@ trait Exportable
         try {
             $metadata = ExportAuditContext::pull($filePath);
             $ionAuth = app('ion_auth');
-            $logger = activity('exports');
+            $log = ExcelConfig::get('activity.log', 'exports');
+            $logger = activity(is_string($log) && $log !== '' ? $log : 'exports');
 
             if ($ionAuth->logged_in()) {
                 $causer = $ionAuth->user()->row();
@@ -47,8 +52,10 @@ trait Exportable
                 $logger->causedByAnonymous();
             }
 
+            $event = ExcelConfig::get('activity.event', 'export.downloaded');
+
             $logger
-                ->event('export.downloaded')
+                ->event(is_string($event) && $event !== '' ? $event : 'export.downloaded')
                 ->withProperties([
                     'export_class' => static::class,
                     'report_type' => class_basename(static::class),
@@ -72,6 +79,8 @@ trait Exportable
     private static function safeFilters(): array
     {
         $filters = [];
+        $maxLength = ExcelConfig::get('filters.max_length', 100);
+        $maxLength = is_int($maxLength) ? $maxLength : (int) $maxLength;
 
         foreach ((array) request()->all() as $key => $value) {
             if (! is_string($key) || static::isSensitiveFilter($key)) {
@@ -83,7 +92,7 @@ trait Exportable
                 continue;
             }
 
-            if (is_string($value) && mb_strlen($value) <= 100) {
+            if (is_string($value) && mb_strlen($value) <= $maxLength) {
                 $filters[$key] = $value;
             }
         }
@@ -111,7 +120,7 @@ trait Exportable
 
     private static function isSensitiveFilter(string $key): bool
     {
-        $sensitiveTerms = [
+        $sensitiveTerms = ExcelConfig::getArray('filters.sensitive', [
             'address',
             'comment',
             'email',
@@ -127,12 +136,16 @@ trait Exportable
             'ssn',
             'tax',
             'token',
-        ];
+        ]);
 
         $key = strtolower($key);
 
         foreach ($sensitiveTerms as $term) {
-            if (strpos($key, $term) !== false) {
+            if (!is_string($term)) {
+                continue;
+            }
+
+            if (strpos($key, strtolower($term)) !== false) {
                 return true;
             }
         }
@@ -142,8 +155,23 @@ trait Exportable
 
     private static function isDateFilter(string $key): bool
     {
-        return strpos(strtolower($key), 'date') !== false
-            && (substr($key, -5) === '_from' || substr($key, -3) === '_to');
+        if (strpos(strtolower($key), 'date') === false) {
+            return false;
+        }
+
+        $suffixes = ExcelConfig::getArray('filters.date_suffixes', ['_from', '_to']);
+
+        foreach ($suffixes as $suffix) {
+            if (!is_string($suffix) || $suffix === '') {
+                continue;
+            }
+
+            if (substr($key, -strlen($suffix)) === $suffix) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -177,7 +205,7 @@ trait Exportable
     {
         $email = trim($email);
 
-        if (!str_contains($email, '@')) {
+        if (strpos($email, '@') === false) {
             return $email;
         }
 

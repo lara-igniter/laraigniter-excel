@@ -6,6 +6,7 @@ use Elegant\Support\Str;
 use Laraigniter\Excel\BaseExporter;
 use Laraigniter\Excel\Contracts\WithHeadings;
 use Laraigniter\Excel\Contracts\WithMapping;
+use Laraigniter\Excel\ExcelConfig;
 use Laraigniter\Excel\ExportAuditContext;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -23,7 +24,9 @@ class ExcelExporter extends BaseExporter
      */
     public function getDefaultExtension(): string
     {
-        return 'xlsx';
+        $extension = ExcelConfig::get('exports.extension', 'xlsx');
+
+        return is_string($extension) && $extension !== '' ? $extension : 'xlsx';
     }
 
     /**
@@ -98,9 +101,15 @@ class ExcelExporter extends BaseExporter
 
         $writer = $ext === 'xls' ? new Xls($spreadsheet) : new Xlsx($spreadsheet);
 
-        $filename = Str::of(class_basename($model))->lower()->toString() . '_' . now()->format('Ymd_Hi') . '.' . $ext;
+        $dateFormat = ExcelConfig::get('exports.date_format', 'Ymd_Hi');
+        $dateFormat = is_string($dateFormat) && $dateFormat !== '' ? $dateFormat : 'Ymd_Hi';
 
-        $tempFile = tempnam(sys_get_temp_dir(), $filename) . '.' . $ext;
+        $filename = Str::of(class_basename($model))->lower()->toString() . '_' . now()->format($dateFormat) . '.' . $ext;
+
+        $directory = ExcelConfig::get('exports.temporary_path', sys_get_temp_dir());
+        $directory = is_string($directory) && is_dir($directory) ? $directory : sys_get_temp_dir();
+
+        $tempFile = tempnam($directory, $filename) . '.' . $ext;
 
         $writer->save($tempFile);
 

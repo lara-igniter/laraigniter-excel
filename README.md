@@ -8,7 +8,23 @@ Excel exports for Laraigniter. An export class collects the rows. The writer sto
 composer require lara-igniter/laraigniter-excel
 ```
 
-The classes are used directly. There is no service provider to register.
+Register the provider in `config/hooks.php`:
+
+```php
+$hook = Hooks::autoload([
+    'providers' => [
+        Laraigniter\Excel\ExcelServiceProvider::class,
+    ],
+]);
+```
+
+The provider loads `config/excel.php` from the package. Publish a copy when the application should replace those defaults:
+
+```powershell
+php artisan vendor:publish --tag=excel-config
+```
+
+The copy lands in the application `config/excel.php` and replaces the package values. `setExtension()` still wins over `exports.extension` for that call.
 
 ## Export a collection
 

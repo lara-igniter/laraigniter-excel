@@ -21,6 +21,13 @@
             "Laraigniter\\Excel\\": "src/"
         }
     },
+    "extra": {
+        "laraigniter": {
+            "providers": [
+                "Laraigniter\\Excel\\ExcelServiceProvider"
+            ]
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }
