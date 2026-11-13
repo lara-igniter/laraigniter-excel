@@ -9,7 +9,6 @@
         "export",
         "spreadsheet"
     ],
-    "version": "1.0.0",
     "require": {
         "php": "^7.4",
         "lara-igniter/activitylog": "^1.0",
