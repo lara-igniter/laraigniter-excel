@@ -1,0 +1,109 @@
+# Laraigniter Excel
+
+Excel exports for Laraigniter. An export class collects the rows. The writer stores an `xlsx` or `xls` file through PhpSpreadsheet.
+
+## Installation
+
+```powershell
+composer require lara-igniter/laraigniter-excel
+```
+
+The classes are used directly. There is no service provider to register.
+
+## Export a collection
+
+```php
+use Laraigniter\Excel\Managers\ExportManager;
+
+$path = ExportManager::make('excel')
+    ->setData($rows)
+    ->setModel(Member::class)
+    ->store();
+```
+
+`store()` returns the path of a temporary file. Pass `xls` with `setExtension('xls')` when the workbook should use the older format. The default extension is `xlsx`.
+
+`setColumns()` adds fields on top of the model exportables. `store(false)` exports only those columns.
+
+A model exposes its columns with the `HasExport` trait. `getExportables()` returns `$exportable` when that property is set, and `$fillable` otherwise.
+
+```php
+use Laraigniter\Excel\Concerns\HasExport;
+
+class Member extends Model
+{
+    use HasExport;
+
+    protected array $exportable = [
+        'last_name',
+        'email',
+    ];
+}
+```
+
+## Download
+
+Use the `Exportable` trait on the export class. `download()` calls `export()`, sends the file, and deletes it afterwards.
+
+```php
+use Laraigniter\Excel\Concerns\Exportable;
+use Laraigniter\Excel\Managers\ExportManager;
+
+class MemberExport
+{
+    use Exportable;
+
+    public function export(): string
+    {
+        return ExportManager::make('excel')
+            ->setData($rows)
+            ->setModel(Member::class)
+            ->store();
+    }
+}
+
+return MemberExport::download();
+```
+
+## Headings and mapped values
+
+Implement `WithHeadings` to replace the generated heading row. Implement `WithMapping` to replace or add values before they are written. Pass the export instance as the second argument of `ExportManager::make()`.
+
+```php
+use Laraigniter\Excel\Concerns\Exportable;
+use Laraigniter\Excel\Contracts\WithHeadings;
+use Laraigniter\Excel\Contracts\WithMapping;
+use Laraigniter\Excel\Managers\ExportManager;
+
+class MemberExport implements WithHeadings, WithMapping
+{
+    use Exportable;
+
+    public function export(): string
+    {
+        return ExportManager::make('excel', $this)
+            ->setData($rows)
+            ->setModel(Member::class)
+            ->store();
+    }
+
+    public function headings(): array
+    {
+        return ['Last name', 'Email'];
+    }
+
+    public function map(object $row): array
+    {
+        return [
+            'email' => $row->email,
+        ];
+    }
+}
+```
+
+A heading list replaces the whole heading row. Mapped keys overwrite the matching field on that row. A field such as `address.city` reads `$row->address->city`.
+
+
+## License
+
+MIT — see [LICENSE.md](LICENSE.md).

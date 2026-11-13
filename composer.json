@@ -1,0 +1,26 @@
+{
+    "name": "lara-igniter/laraigniter-excel",
+    "description": "Excel exports for Laraigniter. Export classes collect rows and the writer stores an xlsx or xls file.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "laraigniter",
+        "excel",
+        "export",
+        "spreadsheet"
+    ],
+    "version": "1.0.0",
+    "require": {
+        "php": "^7.4",
+        "lara-igniter/activitylog": "^1.0",
+        "lara-igniter/framework": "^1.51",
+        "phpoffice/phpspreadsheet": "^1.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Laraigniter\\Excel\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
