@@ -39,7 +39,7 @@ $path = ExportManager::make('excel')
     ->store();
 ```
 
-`store()` returns the path of a temporary file. Pass `xls` with `setExtension('xls')` when the workbook should use the older format. The default extension is `xlsx`.
+`store()` returns the path of a temporary file under `storage/framework/cache/excel`. Pass `xls` with `setExtension('xls')` when the workbook should use the older format. The default extension is `xlsx`. `temporary_files.local_permissions` sets the directory mode when that folder is created and the file mode after the workbook is saved.
 
 `setColumns()` adds fields on top of the model exportables. `store(false)` exports only those columns.
 

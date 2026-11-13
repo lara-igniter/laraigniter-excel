@@ -23,11 +23,6 @@ $config = [
         'extension' => 'xlsx',
 
         /**
-         * Directory for the temporary workbook. The directory must exist.
-         */
-        'temporary_path' => sys_get_temp_dir(),
-
-        /**
          * Date fragment appended to the stored and downloaded file name.
          */
         'date_format' => 'Ymd_Hi',
@@ -55,6 +50,44 @@ $config = [
             'creator' => '',
             'title' => '',
             'company' => '',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary files
+    |--------------------------------------------------------------------------
+    |
+    | The writer stores the workbook here before it is downloaded. The path
+    | stays inside the project. local_permissions sets the directory mode
+    | when the directory is created and the file mode after the workbook is
+    | saved. Leave a flag out to keep the filesystem default.
+    |
+    */
+    'temporary_files' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Local Temporary Path
+        |--------------------------------------------------------------------------
+        |
+        | The writer saves the workbook in this directory before the file is
+        | downloaded. The directory is created when it does not exist.
+        |
+        */
+        'local_path' => storage_path('framework/cache/laraigniter-excel'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Local Temporary Path Permissions
+        |--------------------------------------------------------------------------
+        |
+        | dir is applied when the directory is created. file is applied to the
+        | workbook after it is saved. A missing flag keeps the filesystem default.
+        |
+        */
+        'local_permissions' => [
+            // 'dir' => 0755,
+            // 'file' => 0644,
         ],
     ],
 

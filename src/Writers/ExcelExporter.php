@@ -114,16 +114,78 @@ class ExcelExporter extends BaseExporter
 
         $filename = Str::of(class_basename($model))->lower()->toString() . '_' . now()->format($dateFormat) . '.' . $ext;
 
-        $directory = ExcelConfig::get('exports.temporary_path', sys_get_temp_dir());
-        $directory = is_string($directory) && is_dir($directory) ? $directory : sys_get_temp_dir();
+        $directory = $this->temporaryDirectory();
+        $temporary = tempnam($directory, $filename);
+        $tempFile = $temporary . '.' . $ext;
 
-        $tempFile = tempnam($directory, $filename) . '.' . $ext;
+        if (is_file($temporary)) {
+            unlink($temporary);
+        }
 
         $writer->save($tempFile);
+        $this->applyFilePermission($tempFile);
 
         ExportAuditContext::record($tempFile, $this->model, $this->collection->count(), $ext);
 
         return $tempFile;
+    }
+
+    /**
+     * @return string
+     */
+    private function temporaryDirectory(): string
+    {
+        $directory = ExcelConfig::get('temporary_files.local_path', $this->defaultTemporaryPath());
+
+        if (!is_string($directory) || $directory === '') {
+            $directory = $this->defaultTemporaryPath();
+        }
+
+        if (is_dir($directory)) {
+            return $directory;
+        }
+
+        $permissions = $this->temporaryPermissions();
+        $created = isset($permissions['dir'])
+            ? mkdir($directory, (int) $permissions['dir'], true)
+            : mkdir($directory, 0777, true);
+
+        if (!$created && !is_dir($directory)) {
+            throw new \RuntimeException('Unable to create the export temporary directory [' . $directory . '].');
+        }
+
+        return $directory;
+    }
+
+    /**
+     * @return string
+     */
+    private function defaultTemporaryPath(): string
+    {
+        return storage_path('framework/cache/laraigniter-excel');
+    }
+
+    /**
+     * @param string $path
+     * @return void
+     */
+    private function applyFilePermission(string $path): void
+    {
+        $permissions = $this->temporaryPermissions();
+
+        if (!isset($permissions['file']) || !is_file($path)) {
+            return;
+        }
+
+        chmod($path, (int) $permissions['file']);
+    }
+
+    /**
+     * @return array
+     */
+    private function temporaryPermissions(): array
+    {
+        return ExcelConfig::getArray('temporary_files.local_permissions', []);
     }
 
     /**
