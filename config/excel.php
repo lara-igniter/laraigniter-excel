@@ -38,10 +38,13 @@ $config = [
         'empty_value' => '',
 
         /**
-         * Display format for columns whose name ends in "_date".
+         * Date display formats, keyed by the column-name suffix.
+         * Add "_at" with its own format for created_at and updated_at.
          */
         'formats' => [
-            'date' => 'j M Y',
+            'dates' => [
+                '_date' => 'j M Y',
+            ],
         ],
 
         /**

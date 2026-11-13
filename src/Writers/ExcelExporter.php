@@ -164,18 +164,50 @@ class ExcelExporter extends BaseExporter
             return $this->emptyValue();
         }
 
-        if (substr(strtolower($column), -5) !== '_date') {
+        $format = $this->dateFormat($column);
+
+        if ($format === null) {
             return $value;
         }
-
-        $format = ExcelConfig::get('exports.formats.date', 'j M Y');
-        $format = is_string($format) && $format !== '' ? $format : 'j M Y';
 
         try {
             return Date::parse($value)->format($format);
         } catch (\Throwable $exception) {
             return $value;
         }
+    }
+
+    /**
+     * @param string $column
+     * @return string|null
+     */
+    private function dateFormat(string $column): ?string
+    {
+        $column = strtolower($column);
+        $formats = ExcelConfig::getArray('exports.formats.dates', [
+            '_date' => 'j M Y',
+        ]);
+        $matched = null;
+        $matchedLength = 0;
+
+        foreach ($formats as $suffix => $format) {
+            if (!is_string($suffix) || $suffix === '' || !is_string($format) || $format === '') {
+                continue;
+            }
+
+            $suffix = strtolower($suffix);
+
+            if (strlen($suffix) <= $matchedLength) {
+                continue;
+            }
+
+            if (substr($column, -strlen($suffix)) === $suffix) {
+                $matched = $format;
+                $matchedLength = strlen($suffix);
+            }
+        }
+
+        return $matched;
     }
 
     /**
