@@ -91,6 +91,15 @@ $config = [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Activity log
+    |--------------------------------------------------------------------------
+    |
+    | Read only when lara-igniter/activitylog is installed. Without that
+    | package these values are ignored and the download still succeeds.
+    |
+    */
     'activity' => [
 
         /**
@@ -104,6 +113,15 @@ $config = [
         'event' => 'export.downloaded',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Logged filters
+    |--------------------------------------------------------------------------
+    |
+    | Shapes the query string stored on the activity entry above. Ignored
+    | when lara-igniter/activitylog is not installed.
+    |
+    */
     'filters' => [
 
         /**

@@ -8,6 +8,8 @@ Excel exports for Laraigniter. An export class collects the rows. The writer sto
 composer require lara-igniter/laraigniter-excel
 ```
 
+`lara-igniter/activitylog` is optional. When that package is installed, `download()` writes an activity entry using `activity` and `filters` in this config. Without the package those keys are ignored and the file is still downloaded.
+
 Register the provider in `config/hooks.php`:
 
 ```php

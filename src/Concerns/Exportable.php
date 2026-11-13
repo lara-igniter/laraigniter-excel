@@ -34,6 +34,10 @@ trait Exportable
 
     private static function logDownload(string $filePath, string $filename, string $format): void
     {
+        if (!class_exists(\Laraigniter\Activitylog\ActivitylogServiceProvider::class) || !function_exists('activity')) {
+            return;
+        }
+
         try {
             $metadata = ExportAuditContext::pull($filePath);
             $ionAuth = app('ion_auth');
