@@ -2,10 +2,12 @@
 
 namespace Laraigniter\Excel\Writers;
 
+use Elegant\Support\Facades\Date;
 use Elegant\Support\Str;
 use Laraigniter\Excel\BaseExporter;
 use Laraigniter\Excel\Contracts\WithHeadings;
 use Laraigniter\Excel\Contracts\WithMapping;
+use Laraigniter\Excel\Contracts\WithProperties;
 use Laraigniter\Excel\ExcelConfig;
 use Laraigniter\Excel\ExportAuditContext;
 use PhpOffice\PhpSpreadsheet\Exception;
@@ -40,6 +42,8 @@ class ExcelExporter extends BaseExporter
         $model = (new $this->model());
 
         $spreadsheet = new Spreadsheet();
+
+        $this->applyProperties($spreadsheet);
 
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -93,7 +97,11 @@ class ExcelExporter extends BaseExporter
 
                 $value = !is_null($relationship) && isset($row->$relationship) ? $row->$relationship->$column : (!is_null($relationship) ? '' : ($row->$column ?? ''));
 
-                $sheet->setCellValueByColumnAndRow($colIndex + 1, $rowIndex + 2, $value);
+                $sheet->setCellValueByColumnAndRow(
+                    $colIndex + 1,
+                    $rowIndex + 2,
+                    $this->presentValue($value, $column)
+                );
             }
         }
 
@@ -116,5 +124,67 @@ class ExcelExporter extends BaseExporter
         ExportAuditContext::record($tempFile, $this->model, $this->collection->count(), $ext);
 
         return $tempFile;
+    }
+
+    /**
+     * @param \PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet
+     * @return void
+     */
+    private function applyProperties(Spreadsheet $spreadsheet): void
+    {
+        $properties = ExcelConfig::getArray('exports.properties', [
+            'creator' => '',
+            'title' => '',
+            'company' => '',
+        ]);
+
+        if ($this->export instanceof WithProperties) {
+            $properties = array_merge($properties, $this->export->properties());
+        }
+
+        $document = $spreadsheet->getProperties();
+
+        foreach (['creator' => 'setCreator', 'title' => 'setTitle', 'company' => 'setCompany'] as $key => $setter) {
+            if (!isset($properties[$key]) || !is_string($properties[$key]) || $properties[$key] === '') {
+                continue;
+            }
+
+            $document->{$setter}($properties[$key]);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @param string $column
+     * @return mixed
+     */
+    private function presentValue($value, string $column)
+    {
+        if ($value === null || $value === '') {
+            return $this->emptyValue();
+        }
+
+        if (substr(strtolower($column), -5) !== '_date') {
+            return $value;
+        }
+
+        $format = ExcelConfig::get('exports.formats.date', 'j M Y');
+        $format = is_string($format) && $format !== '' ? $format : 'j M Y';
+
+        try {
+            return Date::parse($value)->format($format);
+        } catch (\Throwable $exception) {
+            return $value;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    private function emptyValue(): string
+    {
+        $empty = ExcelConfig::get('exports.empty_value', '');
+
+        return is_string($empty) ? $empty : '';
     }
 }

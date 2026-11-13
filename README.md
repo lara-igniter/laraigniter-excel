@@ -26,6 +26,8 @@ php artisan vendor:publish --tag=excel-config
 
 The copy lands in the application `config/excel.php` and replaces the package values. `setExtension()` still wins over `exports.extension` for that call.
 
+A column whose name ends in `_date` is written with `exports.formats.date`. An empty cell uses `exports.empty_value`. `exports.properties` sets the workbook creator, title, and company when the value is not empty. An export implements `Laraigniter\Excel\Contracts\WithProperties` and returns `properties()` to replace only the keys it declares.
+
 ## Export a collection
 
 ```php

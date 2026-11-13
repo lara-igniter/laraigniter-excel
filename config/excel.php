@@ -31,6 +31,28 @@ $config = [
          * Date fragment appended to the stored and downloaded file name.
          */
         'date_format' => 'Ymd_Hi',
+
+        /**
+         * Written when a cell has no value.
+         */
+        'empty_value' => '',
+
+        /**
+         * Display format for columns whose name ends in "_date".
+         */
+        'formats' => [
+            'date' => 'j M Y',
+        ],
+
+        /**
+         * Workbook properties. An empty string leaves the spreadsheet default.
+         * An export that implements WithProperties replaces only the keys it returns.
+         */
+        'properties' => [
+            'creator' => '',
+            'title' => '',
+            'company' => '',
+        ],
     ],
 
     'activity' => [
