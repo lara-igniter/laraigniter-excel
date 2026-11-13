@@ -233,7 +233,9 @@ class ExcelExporter extends BaseExporter
         }
 
         try {
-            return Date::parse($value)->format($format);
+            $date = Date::parse($value);
+
+            return method_exists($date, 'rawFormat') ? $date->rawFormat($format) : $date->format($format);
         } catch (\Throwable $exception) {
             return $value;
         }
