@@ -235,7 +235,12 @@ class ExcelExporter extends BaseExporter
         try {
             $date = Date::parse($value);
 
-            return method_exists($date, 'rawFormat') ? $date->rawFormat($format) : $date->format($format);
+            // rawFormat always uses English names. translatedFormat follows Date/Carbon locale.
+            if (method_exists($date, 'translatedFormat')) {
+                return $date->translatedFormat($format);
+            }
+
+            return $date->format($format);
         } catch (\Throwable $exception) {
             return $value;
         }
